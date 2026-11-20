@@ -19,6 +19,11 @@
 
 实时交互流式数字人引擎，实现音视频同步对话，已在业内获得广泛商用
 
+> 🚀 **liveStream 專屬展示台**：已新增 **AI 擬真數字主播帶貨、說唱表演與即時互動展示台**！
+> * 📖 **完整功能與操作手冊**：請參閱 [SHOWCASE_GUIDE.md](./SHOWCASE_GUIDE.md)
+> * 🖥️ **本地一鍵啟動**：執行 `run_showcase.bat` 訪問 `http://localhost:8010/livestream_stage.html`
+> * 🔗 **本專案 GitHub 倉庫**：[https://github.com/ptechao/liveStream](https://github.com/ptechao/liveStream)
+
 **效果演示**: [wav2lip](https://www.bilibili.com/video/BV1scwBeyELA/) | [ernerf](https://www.bilibili.com/video/BV1G1421z73r/) | [musetalk](https://www.bilibili.com/video/BV1bUwezvEnG/)
 
 国内镜像: [Gitee](https://gitee.com/lipku/LiveTalking) | [GitCode](https://gitcode.com/lipku/LiveTalking)
