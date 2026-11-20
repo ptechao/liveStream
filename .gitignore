@@ -23,4 +23,7 @@ dist
 uploads/*
 !uploads/.gitkeep
 .env
+*.pth
+data/avatars/**/*.zip
+
 

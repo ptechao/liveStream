@@ -93,16 +93,36 @@ d:\peter\liveStream\
 ```bat
 run_showcase.bat
 ```
-*(腳本會自動檢測虛擬環境並啟動在 `http://localhost:8010`)*
+提供模式選擇：
+* **選項 [1]**：啟動 **AI 擬真主播展示台**（推薦，流暢 60 FPS，支援商品帶貨、說唱表演、即時彈幕互動）
+* **選項 [2]**：啟動 **LiveTalking 原生 WebRTC 服務**（使用本機 Wav2Lip 深度模型 CPU 推理）
+* **選項 [3]**：一鍵下載/更新 Wav2Lip 模型權重與形象包
 
-### 步驟 2：開啟瀏覽器觀看
+---
+
+## 📦 五、 深度學習模型與數位人資料包狀態
+
+本機已完成所有深度學習推理檔案與依賴套件配置：
+
+| 項目 | 狀態 | 檔案路徑 / 說明 |
+| :--- | :---: | :--- |
+| **Wav2Lip 核心權重** | ✅ 已下載完成 | `models/wav2lip.pth` (204.7 MB) |
+| **Avatar1 形象包** | ✅ 已下載並解壓 | `data/avatars/wav2lip256_avatar1/` (`coords.pkl`, `full_imgs`, `face_imgs`) |
+| **S3FD 人臉檢測模型** | ✅ 已下載完成 | `avatars/wav2lip/face_detection/detection/sfd/s3fd.pth` (20.8 MB) |
+| **PyTorch CPU 推理** | ✅ 已驗證就緒 | `torch 2.3.1+cpu` + `numpy 1.26.4` (無相容性警告，CPU 順暢運算) |
+| **一鍵下載腳本** | ✅ 內建支援 | 執行 `python download_models.py` 可隨時自動補充上述模型 |
+
+---
+
+## 🌐 六、 展示台網址清單
+
 * **主要展示台（推薦）**：[http://localhost:8010/livestream_stage.html](http://localhost:8010/livestream_stage.html)
 * **3D 擬真舞台（備選）**：[http://localhost:8010/realistic_avatar.html](http://localhost:8010/realistic_avatar.html)
 * **LiveTalking 原生首頁**：[http://localhost:8010/index.html](http://localhost:8010/index.html)
 
 ---
 
-## 🔗 五、 Git 儲存庫
+## 🔗 七、 Git 儲存庫
 
 * **GitHub 遠端庫**：[https://github.com/ptechao/liveStream](https://github.com/ptechao/liveStream)
 * **上游開源參照**：[https://github.com/lipku/LiveTalking](https://github.com/lipku/LiveTalking)
