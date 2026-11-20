@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LiveTalking AI 直播帶貨與說唱表演展示台</title>
+  <link rel="icon" href="/assets/LiveTalking-logo.png" type="image/png">
+  <style>
+    :root {
+      --bg-dark: #0f111a;
+      --card-bg: rgba(22, 27, 46, 0.85);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --primary: #ff2e63;
+      --primary-hover: #e02353;
+      --accent: #08d9d6;
+      --accent-purple: #8a2be2;
+      --gold: #ffb703;
+      --text-main: #eaeaea;
+      --text-muted: #9ba1b0;
+      --success: #06d6a0;
+      --danger: #ef476f;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at 20% 20%, #1a1a2e 0%, #0f111a 100%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* 頂部導航列 */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 24px;
+      background: rgba(15, 17, 26, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand img {
+      height: 36px;
+      border-radius: 8px;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ff2e63, #ffb703, #08d9d6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-links {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .header-btn {
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      text-decoration: none;
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--card-border);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .header-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: var(--accent);
+    }
+
+    /* 主工作區佈局 */
+    .container {
+      display: grid;
+      grid-template-columns: 460px 1fr;
+      gap: 20px;
+      padding: 20px;
+      flex: 1;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (max-width: 1080px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* 直播視窗 Stage */
+    .stage-card {
+      background: #000;
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      aspect-ratio: 9 / 16;
+      max-height: 820px;
+      justify-self: center;
+      width: 100%;
+      max-width: 460px;
+    }
+
+    /* 直播畫面畫布與背景 */
+    .stage-screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at center 40%, #2b1055 0%, #0f0c1b 100%);
+      overflow: hidden;
+    }
+
+    #avatarCanvas {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* 直播上方浮動資訊 */
+    .stage-top-overlay {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .streamer-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(8px);
+      padding: 4px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .streamer-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff2e63, #ffb703);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    .streamer-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .streamer-name {
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .streamer-status {
+      font-size: 0.68rem;
+      color: #aaa;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--danger);
+      border-radius: 50%;
+      animation: pulse-live 1.5s infinite;
+    }
+
+    @keyframes pulse-live {
+      0% { transform: scale(0.9); opacity: 0.7; }
+      50% { transform: scale(1.3); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.7; }
+    }
+
+    .stage-stats {
+      display: flex;
+      gap: 6px;
+    }
+
+    .stat-pill {
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(8px);
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 0.72rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    /* 彈幕層 (Bullet Comments) */
+    .danmaku-container {
+      position: absolute;
+      top: 60px;
+      bottom: 220px;
+      left: 0;
+      right: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 15;
+    }
+
+    .danmaku-item {
+      position: absolute;
+      white-space: nowrap;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      padding: 5px 12px;
+      border-radius: 16px;
+      color: #fff;
+      font-size: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      animation: danmaku-fly linear forwards;
+    }
+
+    .danmaku-item.special {
+      background: linear-gradient(90deg, rgba(255, 46, 99, 0.8), rgba(255, 183, 3, 0.8));
+      font-weight: bold;
+      border-color: #ffb703;
+    }
+
+    @keyframes danmaku-fly {
+      0% { transform: translateX(480px); }
+      100% { transform: translateX(-100%); }
+    }
+
+    /* 動作與倒數特效全屏覆蓋 */
+    .action-banner {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.8);
+      background: linear-gradient(135deg, rgba(255, 46, 99, 0.95), rgba(138, 43, 226, 0.95));
+      padding: 16px 28px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(255, 46, 99, 0.8);
+      z-index: 30;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .action-banner.show {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .action-banner h2 {
+      font-size: 2rem;
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .action-banner p {
+      font-size: 1rem;
+      color: #ffe6ee;
+    }
+
+    /* 直播熱賣商品浮動卡片 */
+    .product-overlay-card {
+      position: absolute;
+      bottom: 75px;
+      left: 12px;
+      right: 12px;
+      background: rgba(18, 22, 36, 0.92);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 14px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 25;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+      transition: all 0.3s;
+    }
+
+    .product-thumb {
+      width: 65px;
+      height: 65px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: #2a2e3d;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      flex-shrink: 0;
+    }
+
+    .product-info-box {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .product-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .product-tags {
+      display: flex;
+      gap: 6px;
+      margin: 4px 0;
+    }
+
+    .prod-tag {
+      font-size: 0.65rem;
+      background: rgba(255, 46, 99, 0.2);
+      color: #ff2e63;
+      border: 1px solid rgba(255, 46, 99, 0.4);
+      padding: 1px 6px;
+      border-radius: 6px;
+    }
+
+    .product-pricing {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .current-price {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--gold);
+    }
+
+    .orig-price {
+      font-size: 0.72rem;
+      color: #888;
+      text-decoration: line-through;
+    }
+
+    .buy-btn {
+      background: linear-gradient(135deg, #ff2e63, #ff6b8b);
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+
+    .buy-btn:hover {
+      transform: scale(1.05);
+    }
+
+    /* 直播底欄控制條 */
+    .stage-bottom-bar {
+      position: absolute;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 25;
+    }
+
+    .stage-btn-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-action-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      transition: all 0.2s;
+    }
+
+    .icon-action-btn:hover {
+      background: var(--primary);
+      transform: scale(1.1);
+    }
+
+    /* 右側多功能控制面板 */
+    .control-card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+    }
+
+    .tabs {
+      display: flex;
+      background: rgba(10, 13, 22, 0.7);
+      border-bottom: 1px solid var(--card-border);
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      padding: 14px 20px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      color: #fff;
+      background: rgba(255, 46, 99, 0.12);
+    }
+
+    .tab-btn.active::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary), var(--gold));
+    }
+
+    .tab-content {
+      padding: 24px;
+      flex: 1;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* 表單元件樣式 */
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+    }
+
+    .preset-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .chip {
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      background: rgba(255, 46, 99, 0.25);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="number"], select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(10, 13, 24, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(8, 217, 214, 0.2);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.5;
+    }
+
+    /* 圖片上傳區域 */
+    .image-picker-box {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .image-preview-mini {
+      width: 70px;
+      height: 70px;
+      border-radius: 10px;
+      background: #111;
+      border: 1px dashed rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .image-preview-mini img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .file-upload-btn {
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: #fff;
+      transition: all 0.2s;
+    }
+
+    .file-upload-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* 操作主按鈕 */
+    .btn-primary {
+      background: linear-gradient(135deg, #ff2e63, #ff6b8b);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 15px rgba(255, 46, 99, 0.4);
+      transition: all 0.2s;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 46, 99, 0.6);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, #08d9d6, #06a5a2);
+      color: #0f111a;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    .btn-secondary:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: #fff;
+    }
+
+    /* 文案即時預覽卡片 */
+    .script-preview-card {
+      margin-top: 18px;
+      background: rgba(10, 13, 24, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .script-preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .script-status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      margin-right: 6px;
+    }
+
+    /* 說唱跳模組樣式 */
+    .rap-banner {
+      background: linear-gradient(135deg, rgba(138, 43, 226, 0.3), rgba(255, 46, 99, 0.3));
+      border: 1px solid rgba(138, 43, 226, 0.5);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      font-size: 0.88rem;
+    }
+
+    .sound-fx-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .sound-fx-btn {
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 12px 6px;
+      text-align: center;
+      cursor: pointer;
+      color: #fff;
+      font-size: 0.85rem;
+      transition: all 0.15s;
+    }
+
+    .sound-fx-btn:hover {
+      background: var(--accent-purple);
+      border-color: #fff;
+      transform: scale(1.05);
+    }
+
+    /* 步驟說明欄位 (使用者要求：啟動後顯示步驟) */
+    .step-guide-box {
+      background: rgba(255, 183, 3, 0.08);
+      border: 1px solid rgba(255, 183, 3, 0.3);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 20px;
+      font-size: 0.85rem;
+    }
+
+    .step-guide-box h4 {
+      color: var(--gold);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .step-guide-box ol {
+      padding-left: 20px;
+      line-height: 1.6;
+      color: #ddd;
+    }
+
+    /* 心形飄動特效 */
+    .floating-heart {
+      position: absolute;
+      font-size: 24px;
+      bottom: 20px;
+      right: 20px;
+      pointer-events: none;
+      animation: float-heart 2s ease-out forwards;
+      z-index: 40;
+    }
+
+    @keyframes float-heart {
+      0% { transform: translateY(0) scale(0.6) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(-260px) scale(1.4) rotate(-25deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部導航 -->
+  <header>
+    <div class="brand">
+      <div style="font-size: 26px;">🎙️</div>
+      <div>
+        <div class="brand-title">LiveTalking AI 直播帶貨與說唱表演展示台</div>
+        <div style="font-size: 0.72rem; color: #888;">Real-time AI E-Commerce & Performance Showcase</div>
+      </div>
+    </div>
+    <div class="header-links">
+      <a class="header-btn" href="/realistic_avatar.html" target="_blank" style="border-color:var(--gold); color:var(--gold);">🎭 3D 擬真主播台</a>
+      <a class="header-btn" href="/index.html" target="_blank">📺 LiveTalking 原生首頁</a>
+      <a class="header-btn" href="/dashboard.html" target="_blank">📊 原生儀表板</a>
+      <a class="header-btn" href="https://github.com/lipku/LiveTalking" target="_blank">⭐ GitHub 倉庫</a>
+    </div>
+  </header>
+
+  <!-- 主操作舞台 -->
+  <div class="container">
+
+    <!-- 左側：直播展示舞台 (Stage Display) -->
+    <div class="stage-card">
+      <div class="stage-screen">
+
+        <!-- 頂部直播間狀態標籤 -->
+        <div class="stage-top-overlay">
+          <div class="streamer-badge">
+            <div class="streamer-avatar" id="avatarBadge">雅</div>
+            <div class="streamer-info">
+              <span class="streamer-name" id="streamerName">雅琪 (AI 帶貨官)</span>
+              <span class="streamer-status"><span class="live-dot"></span> LIVE 8010台</span>
+            </div>
+          </div>
+          <div class="stage-stats">
+            <div class="stat-pill">👁️ <span id="viewerCount">23,940</span></div>
+            <div class="stat-pill" style="cursor:pointer;" onclick="spawnHeart()">❤️ <span id="likeCount">19.5w</span></div>
+          </div>
+        </div>
+
+        <!-- 數位人主繪圖畫布 (Audio-Reactive Canvas with Lip-Sync & Actions) -->
+        <canvas id="avatarCanvas" width="460" height="780"></canvas>
+
+        <!-- 彈幕容器 -->
+        <div class="danmaku-container" id="danmakuBox"></div>
+
+        <!-- 特效與大字橫幅 -->
+        <div class="action-banner" id="actionBanner">
+          <h2 id="bannerTitle">3 · 2 · 1 上連結！</h2>
+          <p id="bannerSub">🔥 手慢無！限時限量搶購開始</p>
+        </div>
+
+        <!-- 浮動熱賣商品卡 (Product Showcase Overlay) -->
+        <div class="product-overlay-card" id="productCard">
+          <img class="product-thumb" id="cardImg" src="/assets/index.jpg" alt="商品照片">
+          <div class="product-info-box">
+            <div class="product-title" id="cardTitle">🔥 爆款旗艦主動降噪耳機</div>
+            <div class="product-tags">
+              <span class="prod-tag" id="cardTag">限時秒殺</span>
+              <span class="prod-tag" style="color:var(--gold); border-color:var(--gold);">免運現貨</span>
+            </div>
+            <div class="product-pricing">
+              <span class="current-price" id="cardPrice">NT$ 899</span>
+              <span class="orig-price" id="cardOrigPrice">NT$ 2,499</span>
+            </div>
+          </div>
+          <button class="buy-btn" onclick="handleBuyClick()">立即搶購</button>
+        </div>
+
+        <!-- 底欄快捷互動按鈕 -->
+        <div class="stage-bottom-bar">
+          <div class="stage-btn-group">
+            <button class="icon-action-btn" title="鼓掌歡呼" onclick="triggerEffect('applause')">👏</button>
+            <button class="icon-action-btn" title="比心送花" onclick="triggerEffect('heart')">💖</button>
+            <button class="icon-action-btn" title="倒數催單" onclick="triggerEffect('countdown')">⏱️</button>
+            <button class="icon-action-btn" title="嗨歌跳舞" onclick="triggerEffect('dance')">🔥</button>
+          </div>
+          <button class="icon-action-btn" style="background:var(--primary);" title="點贊" onclick="spawnHeart()">👍</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 右側：多功能互動控制台 (Dashboard Controls) -->
+    <div class="control-card">
+
+      <!-- 選項卡標籤 -->
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(0)">🛍️ 帶貨模式</button>
+        <button class="tab-btn" onclick="switchTab(1)">🎤 表演 / 說唱跳</button>
+        <button class="tab-btn" onclick="switchTab(2)">💬 觀眾互動 & 彈幕</button>
+        <button class="tab-btn" onclick="switchTab(3)">⚙️ 主播音色與舞台</button>
+      </div>
+
+      <!-- Tab 0: 帶貨配置 -->
+      <div class="tab-content active" id="tab0">
+
+        <!-- 啟動與操作步驟導覽 (遵照使用者要求：啟動後顯示步驟) -->
+        <div class="step-guide-box">
+          <h4>🚀 帶貨與表演操作流程</h4>
+          <ol>
+            <li><strong>選擇或填寫商品資訊</strong>：可點擊下方快速範本，或自行上傳商品照片、填入名稱與價格。</li>
+            <li><strong>生成或微調話術</strong>：點選話術風格（激情叫賣、深度開箱、溫柔推坑等），AI 自動編排專業話術。</li>
+            <li><strong>點擊「開始直播帶貨」</strong>：左側展示台將同步彈出商品卡，數位人即時配合口型、表情與肢體生動開播！</li>
+          </ol>
+        </div>
+
+        <div class="section-title">✨ 快速範本填寫 (點擊直接代入)</div>
+        <div class="preset-chips">
+          <div class="chip" onclick="applyProductPreset('headphone')">🎧 旗艦主動降噪無線耳機</div>
+          <div class="chip" onclick="applyProductPreset('watch')">⌚ 專業 GPS 智能極限運動錶</div>
+          <div class="chip" onclick="applyProductPreset('coffee')">☕ 特選精品冷萃咖啡豆禮盒</div>
+          <div class="chip" onclick="applyProductPreset('massage')">⚡ 便攜超輕量筋膜按摩槍</div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>📦 商品名稱</label>
+            <input type="text" id="prodName" value="🔥 爆款旗艦主動降噪耳機" placeholder="請輸入商品名稱">
+          </div>
+          <div class="form-group">
+            <label>🏷️ 話術與演繹風格</label>
+            <select id="salesStyle">
+              <option value="passionate">💥 爆款激情叫賣 (熱情大喊、限時破盤)</option>
+              <option value="review">🧐 專業測評開箱 (理性數據、品質解析)</option>
+              <option value="gentle">💖 溫柔知性推坑 (自用回購、姐妹分享)</option>
+              <option value="countdown">⏱️ 限時倒數秒殺 (緊張刺激、庫存告急)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>💰 直播秒殺特惠價</label>
+            <input type="text" id="prodPrice" value="NT$ 899">
+          </div>
+          <div class="form-group">
+            <label>🏷️ 專櫃/官方原價</label>
+            <input type="text" id="prodOrigPrice" value="NT$ 2,499">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>🌟 核心賣點與特色 (AI 話術生成重點)</label>
+          <input type="text" id="prodHighlights" value="45dB 深度主動降噪、高音質金標認證、超長 40 小時續航、零延遲打遊戲必備">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>🖼️ 商品照片 (支援本機上傳或圖片 URL)</label>
+            <div class="image-picker-box">
+              <div class="image-preview-mini">
+                <img id="imgPreview" src="/assets/index.jpg" alt="預覽">
+              </div>
+              <div style="flex:1;">
+                <input type="text" id="prodImgUrl" placeholder="可貼上圖片網址" onchange="updatePreviewImg(this.value)">
+                <div style="margin-top:6px;">
+                  <label class="file-upload-btn">
+                    📁 上傳本機商品照片
+                    <input type="file" id="prodImgFile" accept="image/*" style="display:none;" onchange="handleFileUpload(event, 'product')">
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>🔗 商品購買連結 / 下單跳轉 URL</label>
+            <input type="text" id="prodLink" value="https://example.com/item/101" placeholder="填入商品網頁連結">
+            <label style="margin-top:10px;">🏷️ 商品活動角標</label>
+            <input type="text" id="prodTagInput" value="限時秒殺" placeholder="例如：今日限定、爆款熱推">
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top:10px;">
+          <button class="btn-secondary" onclick="generateSalesScript()">🪄 AI 智能生成帶貨話術</button>
+          <button class="btn-primary" onclick="startLivePitch()">🎬 開始直播帶貨口播！</button>
+        </div>
+
+        <!-- 話術內容預覽與手動微調 -->
+        <div class="script-preview-card">
+          <div class="script-preview-header">
+            <span><span class="script-status-dot"></span><strong>直播口播文案 (可直接編輯微調)</strong></span>
+            <button class="btn-outline" style="padding:4px 10px; font-size:0.75rem;" onclick="copyScript()">📋 複製文案</button>
+          </div>
+          <textarea id="scriptText" rows="4">家人們！所有直播間的兄弟姐妹們注意了！今天給大家帶來的這款【🔥 爆款旗艦主動降噪耳機】，真的不用我多吹！45dB 深度主動降噪、高音質金標認證、超長 40 小時續航！平時在專櫃原價要 NT$ 2,499，今天在我們直播間限時秒殺只要 NT$ 899！只有前50組，3、2、1，手慢無，給我火速搶起來！</textarea>
+        </div>
+
+      </div>
+
+      <!-- Tab 1: 表演 / 說唱跳 -->
+      <div class="tab-content" id="tab1">
+        <div class="rap-banner">
+          🔥 <strong>說唱跳表演模式</strong>：數位人將自動切換至節奏韻律狀態，伴隨鼓點節拍與霓虹舞台燈光，進行押韻帶貨說唱與動態熱場表演！
+        </div>
+
+        <div class="form-group">
+          <label>🎵 表演主題與風格</label>
+          <select id="rapStyle">
+            <option value="hype_rap">🔥 爆款炸場說唱 (押韻叫賣、節奏強勁)</option>
+            <option value="welcome_song">🎉 直播間熱烈歡迎曲 (感謝點贊、關注福利)</option>
+            <option value="thank_you_rap">💎 尊榮感謝榜一大哥說唱</option>
+            <option value="freestyle">⚡ 即興帶貨 Freestyle</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>🥁 伴奏節奏速度 (BPM)</label>
+            <select id="rapBpm">
+              <option value="fast">⚡ 狂暴快嘴 (125 BPM - 炸場必備)</option>
+              <option value="medium" selected>🎶 標準律動 (105 BPM - 清晰流暢)</option>
+              <option value="chill">🕶️ 隨性律動 (88 BPM - 放鬆悠閒)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>✨ 舞台燈光效果</label>
+            <select id="stageLighting" onchange="updateStageLighting(this.value)">
+              <option value="neon">🌈 霓虹派對 (Neon Club)</option>
+              <option value="cyber">🟣 賽博紫光 (Cyberpunk)</option>
+              <option value="studio">💡 專業暖光 (Pro Studio)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <button class="btn-secondary" onclick="generateRapLyrics()">🎶 AI 生成說唱表演詞</button>
+          <button class="btn-primary" style="background:linear-gradient(135deg, #8a2be2, #ff2e63);" onclick="startRapShow()">🔥 啟動說唱跳大秀！</button>
+        </div>
+
+        <div class="script-preview-card" style="margin-top:16px;">
+          <div class="script-preview-header">
+            <span><strong>🎤 說唱唱詞預覽 (支援押韻雙押)</strong></span>
+          </div>
+          <textarea id="rapText" rows="5">Yo check it out！這裡是今日直播間，今天帶來的寶貝絕對不一般！
+45dB 降噪超強看得見，音質頂上天！
+價格打到骨折，原價兩千四，猶豫一秒你就慢了一整年！
+今天秒殺八百九，全場節奏跟著搖！點關注，不迷路，3-2-1 上連結，買到就是大暴富！</textarea>
+        </div>
+
+        <div class="section-title" style="margin-top:20px;">🔊 現場氣氛音效觸發板</div>
+        <div class="sound-fx-grid">
+          <button class="sound-fx-btn" onclick="playSfx('applause')">👏 掌聲歡呼</button>
+          <button class="sound-fx-btn" onclick="playSfx('cash')">🛎️ 叮咚上架</button>
+          <button class="sound-fx-btn" onclick="playSfx('drum')">🥁 激動戰鼓</button>
+          <button class="sound-fx-btn" onclick="playSfx('airhorn')">📢 派對喇叭</button>
+        </div>
+      </div>
+
+      <!-- Tab 2: 觀眾互動 & 彈幕問答 -->
+      <div class="tab-content" id="tab2">
+        <div class="section-title">💬 觀眾熱門提問 (點擊立即讓主播解答)</div>
+        <div class="preset-chips">
+          <div class="chip" onclick="simulateViewerQuestion('主播這個有現貨嗎？什麼時候能發貨？')">🙋‍♂️ 有現貨嗎？何時發貨？</div>
+          <div class="chip" onclick="simulateViewerQuestion('今天下單有什麼優惠或贈品嗎？')">🎁 今天下單有送什麼？</div>
+          <div class="chip" onclick="simulateViewerQuestion('耳機品質和音質怎麼樣？有保固嗎？')">🛡️ 品質與保固如何？</div>
+          <div class="chip" onclick="simulateViewerQuestion('主播太帥了！可以現場來一段說唱或才藝嗎？')">🎤 主播唱首歌吧！</div>
+        </div>
+
+        <div class="form-group" style="margin-top:14px;">
+          <label>✍️ 模擬觀眾傳送彈幕提問</label>
+          <div style="display:flex; gap:10px;">
+            <input type="text" id="viewerInput" placeholder="例如：請問這款男女都可以用嗎？" value="請問主播，今天下單有免運費嗎？">
+            <button class="btn-primary" style="width:160px; margin-top:0;" onclick="sendCustomComment()">發送彈幕</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>⚡ 數位人主播回覆內容</label>
+          <textarea id="qaReplyText" rows="3">家人們放心！這款商品我們直接從官方大倉直發，全都是全新現貨！今天下單24小時內極速出庫，保證最快送到大家手上，而且全場免運費！</textarea>
+          <button class="btn-secondary" style="margin-top:8px;" onclick="speakQaReply()">🗣️ 主播即時回答觀眾</button>
+        </div>
+
+        <div class="form-group" style="margin-top:16px;">
+          <label>
+            <input type="checkbox" id="autoDanmakuCheck" checked onchange="toggleAutoDanmaku(this.checked)">
+            自動生成熱鬧直播間彈幕氛圍 (模擬真實粉絲互動刷屏)
+          </label>
+        </div>
+      </div>
+
+      <!-- Tab 3: 主播形象、音色與舞台設定 -->
+      <div class="tab-content" id="tab3">
+        <div class="section-title">👤 主播形象外觀更換</div>
+        <div class="preset-chips">
+          <div class="chip" onclick="selectAvatarPreset('elena')">🌟 艾蓮娜 (Elena) - 氣質金牌帶貨官 (擬真)</div>
+          <div class="chip" onclick="selectAvatarPreset('lucas')">🎤 盧卡斯 (Lucas) - 潮流說唱帶貨小生 (擬真)</div>
+          <div class="chip" onclick="selectAvatarPreset('mia')">🌸 米亞 (Mia) - 甜美知性好物分享 (擬真)</div>
+        </div>
+
+        <div class="form-group" style="margin-top:10px;">
+          <label>📷 自訂真人主播照片 (支援本機上傳任意真實人像/自拍照)</label>
+          <label class="file-upload-btn">
+            📁 上傳真人照片一鍵生成主播
+            <input type="file" id="avatarImgFile" accept="image/*" style="display:none;" onchange="handleFileUpload(event, 'avatar')">
+          </label>
+          <div style="font-size:0.75rem; color:#888; margin-top:6px;">上傳後系統將自動將照片設為主體，並同步疊加動態呼吸、眨眼與語音口型！</div>
+        </div>
+
+        <div class="section-title" style="margin-top:20px;">🎙️ Edge-TTS 語音音色選擇</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>語音角色 (Microsoft Edge-TTS 雲端高擬真音色)</label>
+            <select id="voiceSelect" onchange="updateVoice(this.value)">
+              <option value="yunxi" selected>雲希 (zh-CN) - 陽光激情小生 (直播喊麥必選)</option>
+              <option value="xiaoxiao">曉曉 (zh-CN) - 甜美自然女聲 (親切推坑)</option>
+              <option value="hsaiochan">曉臻 (zh-TW) - 台灣甜美女聲 (自然台灣腔)</option>
+              <option value="yunjhe">雲哲 (zh-TW) - 台灣知性男聲</option>
+              <option value="yunjian">雲健 (zh-CN) - 影視解說激情男聲</option>
+              <option value="jenny">Jenny (en-US) - 國際英文女主播</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>語速調節</label>
+            <select id="rateSelect">
+              <option value="-10%">慢速 (-10%)</option>
+              <option value="+0%" selected>正常速度 (+0%)</option>
+              <option value="+10%">快速帶貨 (+10%)</option>
+              <option value="+20%">激情極速 (+20%)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:20px;">🌐 後端整合設定</div>
+        <div class="form-group">
+          <label>服務模式切換</label>
+          <select id="backendMode">
+            <option value="stage" selected>展示台高擬真音畫同步模式 (本機即刻流暢運行，免裝大型 CUDA 權重)</option>
+            <option value="webrtc">LiveTalking WebRTC 原生流對接模式 (需已加載 wav2lip.pth)</option>
+          </select>
+        </div>
+
+        <button class="btn-outline" style="width:100%; margin-top:12px;" onclick="testAudioVoice()">🔊 試聽當前主播音色</button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // ─── 全域狀態與變數 ──────────────────────────────────────────────
+    let audioCtx = null;
+    let analyserNode = null;
+    let audioSource = null;
+    let isSpeaking = false;
+    let isRapping = false;
+    let mouthOpenRatio = 0;
+    let headTilt = 0;
+    let blinkTimer = 0;
+    let isBlinking = false;
+    let animationFrameId = null;
+    let autoDanmakuInterval = null;
+    let activeStageLight = 'neon';
+
+    // 主播形象設定
+    const avatarPresets = {
+      elena: {
+        name: '艾蓮娜 (Elena)',
+        title: '艾',
+        imgUrl: '/assets/avatars/elena_pro.png',
+        defaultVoice: 'hsaiochan', // 台灣甜美女聲
+        mouthY: 48,
+        mouthW: 32,
+        mouthH: 14
+      },
+      lucas: {
+        name: '盧卡斯 (Lucas)',
+        title: '盧',
+        imgUrl: '/assets/avatars/lucas_hype.png',
+        defaultVoice: 'yunxi', // 激情帶貨男聲
+        mouthY: 48,
+        mouthW: 34,
+        mouthH: 14
+      },
+      mia: {
+        name: '米亞 (Mia)',
+        title: '米',
+        imgUrl: '/assets/avatars/mia_sweet.png',
+        defaultVoice: 'xiaoxiao', // 甜美自然女聲
+        mouthY: 48,
+        mouthW: 30,
+        mouthH: 14
+      }
+    };
+
+    const avatarImgs = {};
+    Object.keys(avatarPresets).forEach(k => {
+      const img = new Image();
+      img.src = avatarPresets[k].imgUrl;
+      avatarImgs[k] = img;
+    });
+
+    const avatarData = {
+      current: 'elena',
+      customImg: null,
+      name: '艾蓮娜 (Elena - 氣質帶貨官)',
+      title: '艾'
+    };
+
+    // 商品範本資料庫
+    const productPresets = {
+      headphone: {
+        name: "🔥 爆款旗艦主動降噪耳機",
+        price: "NT$ 899",
+        orig_price: "NT$ 2,499",
+        highlights: "45dB 深度主動降噪、高音質金標認證、超長 40 小時續航、零延遲打遊戲必備",
+        img: "/assets/index.jpg",
+        link: "https://example.com/item/headphone",
+        tag: "限時秒殺"
+      },
+      watch: {
+        name: "⌚ 專業 GPS 智能極限運動錶",
+        price: "NT$ 1,280",
+        orig_price: "NT$ 3,990",
+        highlights: "精準心率血氧監測、全天候 GPS 定位、50米專業防水、14天超長續航",
+        img: "/assets/LiveTalking-logo.png",
+        link: "https://example.com/item/watch",
+        tag: "爆款首推"
+      },
+      coffee: {
+        name: "☕ 特選精品冷萃咖啡豆禮盒",
+        price: "NT$ 599",
+        orig_price: "NT$ 1,200",
+        highlights: "100% 阿拉比卡莊園精選、柑橘黑巧芳醇層次、充氮保鮮鎖住極致香氣",
+        img: "/assets/main.png",
+        link: "https://example.com/item/coffee",
+        tag: "回購冠軍"
+      },
+      massage: {
+        name: "⚡ 便攜超輕量筋膜按摩槍",
+        price: "NT$ 799",
+        orig_price: "NT$ 2,190",
+        highlights: "航空級鋁合金機身僅重380g、4檔深層震動擊潰乳酸、Type-C 隨處快充",
+        img: "/assets/index.jpg",
+        link: "https://example.com/item/massage",
+        tag: "辦公必備"
+      }
+    };
+
+    // ─── 初始化畫布與動畫 ──────────────────────────────────────────
+    const canvas = document.getElementById('avatarCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function initCanvasAnimation() {
+      let tick = 0;
+      function render() {
+        tick++;
+        ctx.clearRect(0, 0, 0, canvas.width, canvas.height);
+
+        // 1. 繪製背景舞台光效
+        drawStageBackground(tick);
+
+        // 2. 音訊頻率分析 (驅動嘴型變化)
+        if (analyserNode && isSpeaking) {
+          const freqData = new Uint8Array(analyserNode.frequencyBinCount);
+          analyserNode.getByteFrequencyData(freqData);
+          
+          // 取語音能量核心頻段 (~300Hz - 2500Hz)
+          let sum = 0;
+          let count = 0;
+          for (let i = 4; i < 40 && i < freqData.length; i++) {
+            sum += freqData[i];
+            count++;
+          }
+          let avg = count > 0 ? (sum / count) : 0;
+          let targetRatio = Math.min(1.0, Math.max(0, (avg - 25) / 90));
+          mouthOpenRatio += (targetRatio - mouthOpenRatio) * 0.45;
+        } else {
+          mouthOpenRatio += (0 - mouthOpenRatio) * 0.2;
+        }
+
+        // 3. 眨眼邏輯
+        blinkTimer++;
+        if (blinkTimer > 180 + Math.sin(tick * 0.05) * 50) {
+          isBlinking = true;
+          if (blinkTimer > 190) {
+            isBlinking = false;
+            blinkTimer = 0;
+          }
+        }
+
+        // 4. 肢體呼吸與律動 (說唱時律動幅度加大)
+        const bounceAmplitude = isRapping ? 12 : 3;
+        const bounceSpeed = isRapping ? 0.16 : 0.04;
+        const bodyBounce = Math.sin(tick * bounceSpeed) * bounceAmplitude;
+        headTilt = Math.sin(tick * 0.03) * (isRapping ? 0.08 : 0.02);
+
+        // 5. 繪製數位人角色形象
+        drawAvatarCharacter(tick, bodyBounce, headTilt);
+
+        animationFrameId = requestAnimationFrame(render);
+      }
+      render();
+    }
+
+    // 繪製舞台光效
+    function drawStageBackground(tick) {
+      const w = canvas.width;
+      const h = canvas.height;
+
+      // 漸層背景
+      let grad;
+      if (activeStageLight === 'neon') {
+        grad = ctx.createLinearGradient(0, 0, w, h);
+        grad.addColorStop(0, '#190a2e');
+        grad.addColorStop(1, '#080816');
+      } else if (activeStageLight === 'cyber') {
+        grad = ctx.createRadialGradient(w/2, h/3, 50, w/2, h/2, 400);
+        grad.addColorStop(0, '#2d0c4d');
+        grad.addColorStop(1, '#05020c');
+      } else {
+        grad = ctx.createLinearGradient(0, 0, 0, h);
+        grad.addColorStop(0, '#2b231d');
+        grad.addColorStop(1, '#0e0c0b');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      // 動態舞台射燈
+      ctx.save();
+      ctx.globalAlpha = isRapping ? 0.35 : 0.18;
+      const lightX = w/2 + Math.sin(tick * 0.03) * (w * 0.35);
+      const coneGrad = ctx.createRadialGradient(lightX, 0, 20, lightX, h, 380);
+      coneGrad.addColorStop(0, '#ff2e63');
+      coneGrad.addColorStop(0.5, '#08d9d6');
+      coneGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = coneGrad;
+      ctx.beginPath();
+      ctx.moveTo(lightX, 0);
+      ctx.lineTo(0, h);
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 繪製數位人主播 (支援照片級擬真主播與自訂真人照片)
+    function drawAvatarCharacter(tick, bounce, tilt) {
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2 + 35 + bounce;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(tilt);
+
+      // 檢查是否有當前形象圖片 (預設或用戶自訂上傳)
+      const currentPreset = avatarPresets[avatarData.current];
+      const activeImg = avatarData.customImg || (currentPreset ? avatarImgs[avatarData.current] : null);
+
+      if (activeImg && activeImg.complete && activeImg.naturalWidth > 0) {
+        const w = 380;
+        const h = (activeImg.naturalHeight / activeImg.naturalWidth) * w;
+        
+        // 1. 照片本體繪製 (帶自然陰影與平滑圓角)
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.65)';
+        ctx.shadowBlur = 28;
+        ctx.beginPath();
+        ctx.roundRect(-w/2, -h/2 + 20, w, h, 20);
+        ctx.clip();
+        ctx.drawImage(activeImg, -w/2, -h/2 + 20, w, h);
+
+        // 2. 擬真眨眼疊加 (若正在眨眼，柔和繪出自然閉眼雙眼皮弧線)
+        if (isBlinking) {
+          ctx.fillStyle = 'rgba(235, 195, 175, 0.95)';
+          [-1, 1].forEach(side => {
+            const ex = side * 27;
+            const ey = -48;
+            ctx.beginPath();
+            ctx.ellipse(ex, ey, 14, 7, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(60, 35, 25, 0.85)';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.arc(ex, ey - 2, 12, 0.1 * Math.PI, 0.9 * Math.PI);
+            ctx.stroke();
+          });
+        }
+
+        ctx.restore();
+
+        // 3. 擬真音素嘴型同步疊加 (動態口腔、上下齒、自然唇峰、高光)
+        const mouthY = (currentPreset ? currentPreset.mouthY : 50);
+        const baseW = (currentPreset ? currentPreset.mouthW : 30);
+        const openH = 4 + mouthOpenRatio * 26;
+        const openW = baseW + mouthOpenRatio * 14;
+
+        // 口腔深色陰影內壁
+        ctx.save();
+        ctx.fillStyle = '#3a080f';
+        ctx.beginPath();
+        ctx.ellipse(0, mouthY, openW/2, openH/2, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 上排與下排牙齒
+        if (mouthOpenRatio > 0.22) {
+          ctx.fillStyle = '#ffffff';
+          // 上牙
+          ctx.fillRect(-openW * 0.32, mouthY - openH * 0.42, openW * 0.64, Math.min(5, openH * 0.35));
+          if (mouthOpenRatio > 0.55) {
+            // 下牙
+            ctx.fillStyle = '#f0f0f0';
+            ctx.fillRect(-openW * 0.26, mouthY + openH * 0.18, openW * 0.52, Math.min(4, openH * 0.25));
+          }
+          // 舌頭紅潤高光
+          ctx.fillStyle = '#c7445c';
+          ctx.beginPath();
+          ctx.ellipse(0, mouthY + openH * 0.2, openW * 0.25, openH * 0.25, 0, 0, Math.PI);
+          ctx.fill();
+        }
+
+        // 上唇與下唇 (擬真水潤光澤)
+        ctx.strokeStyle = '#c4334a';
+        ctx.lineWidth = 2.8;
+        ctx.beginPath();
+        ctx.ellipse(0, mouthY, openW/2, openH/2, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // 唇角微揚與高光
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.beginPath();
+        ctx.ellipse(-openW * 0.2, mouthY - openH * 0.3, 3, 1.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+
+      } else {
+        // 內建數位人備用向量繪製
+        drawStylizedAvatar(tick);
+      }
+
+      ctx.restore();
+    }
+
+    // 內建主播高質感形象繪製
+    function drawStylizedAvatar(tick) {
+      const isCute = avatarData.current === 'mengmeng';
+      const isRapper = avatarData.current === 'kevin';
+
+      // 身體與服裝
+      ctx.save();
+      ctx.fillStyle = isRapper ? '#181b24' : (isCute ? '#ff758f' : '#2b3a67');
+      ctx.beginPath();
+      ctx.moveTo(-110, 190);
+      ctx.quadraticCurveTo(-90, 80, -45, 60);
+      ctx.lineTo(45, 60);
+      ctx.quadraticCurveTo(90, 80, 110, 190);
+      ctx.closePath();
+      ctx.fill();
+
+      // 領口/飾品
+      ctx.fillStyle = isRapper ? '#ffb703' : '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(-25, 60);
+      ctx.lineTo(0, 85);
+      ctx.lineTo(25, 60);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // 脖子
+      ctx.fillStyle = '#fce5d8';
+      ctx.fillRect(-18, 20, 36, 45);
+
+      // 臉部輪廓
+      ctx.save();
+      ctx.fillStyle = '#ffebd9';
+      ctx.shadowColor = 'rgba(0,0,0,0.2)';
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.moveTo(-50, -50);
+      ctx.quadraticCurveTo(-55, 15, 0, 48);
+      ctx.quadraticCurveTo(55, 15, 50, -50);
+      ctx.quadraticCurveTo(45, -95, 0, -95);
+      ctx.quadraticCurveTo(-45, -95, -50, -50);
+      ctx.fill();
+      ctx.restore();
+
+      // 腮紅
+      ctx.fillStyle = 'rgba(255, 107, 139, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(-32, -10, 12, 7, 0, 0, Math.PI * 2);
+      ctx.ellipse(32, -10, 12, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 眼睛
+      if (isBlinking) {
+        ctx.strokeStyle = '#2c221e';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-36, -30);
+        ctx.lineTo(-18, -30);
+        ctx.moveTo(18, -30);
+        ctx.lineTo(36, -30);
+        ctx.stroke();
+      } else {
+        // 眼睛外框
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(-26, -30, 10, 7, 0, 0, Math.PI * 2);
+        ctx.ellipse(26, -30, 10, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 眼珠瞳孔 (帶微動與高光)
+        const eyeOffset = Math.sin(tick * 0.05) * 1.5;
+        ctx.fillStyle = isRapper ? '#08d9d6' : '#2b1b17';
+        ctx.beginPath();
+        ctx.arc(-26 + eyeOffset, -30, 5, 0, Math.PI * 2);
+        ctx.arc(26 + eyeOffset, -30, 5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 高光
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-24 + eyeOffset, -32, 2, 0, Math.PI * 2);
+        ctx.arc(28 + eyeOffset, -32, 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // 眉毛
+      ctx.strokeStyle = '#3a2e2b';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(-36, -42);
+      ctx.quadraticCurveTo(-26, -46, -16, -42);
+      ctx.moveTo(16, -42);
+      ctx.quadraticCurveTo(26, -46, 36, -42);
+      ctx.stroke();
+
+      // 鼻子
+      ctx.fillStyle = '#e8ba9b';
+      ctx.beginPath();
+      ctx.arc(0, -12, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 動態口型嘴巴 (Audio-Reactive Lip Sync)
+      const mouthY = 14;
+      const mouthH = 3 + mouthOpenRatio * 20;
+      const mouthW = 20 + mouthOpenRatio * 12;
+
+      ctx.fillStyle = '#a62438';
+      ctx.beginPath();
+      ctx.ellipse(0, mouthY, mouthW/2, mouthH/2, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#cf344d';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      if (mouthOpenRatio > 0.35) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(-mouthW/3, mouthY - mouthH/3, mouthW * 0.66, 2.5);
+      }
+
+      // 髮型
+      ctx.fillStyle = isCute ? '#ff85a1' : (isRapper ? '#22222b' : '#3d261d');
+      ctx.beginPath();
+      ctx.moveTo(-52, -45);
+      ctx.quadraticCurveTo(-58, -98, 0, -102);
+      ctx.quadraticCurveTo(58, -98, 52, -45);
+      ctx.quadraticCurveTo(35, -70, 0, -72);
+      ctx.quadraticCurveTo(-35, -70, -52, -45);
+      ctx.fill();
+
+      // 瀏海與鬢角
+      ctx.beginPath();
+      ctx.moveTo(-45, -70);
+      ctx.lineTo(-48, -10);
+      ctx.lineTo(-38, -35);
+      ctx.lineTo(0, -55);
+      ctx.lineTo(38, -35);
+      ctx.lineTo(48, -10);
+      ctx.lineTo(45, -70);
+      ctx.closePath();
+      ctx.fill();
+
+      // 潮流耳機 (若是說唱主播或科技主播)
+      if (isRapper) {
+        ctx.fillStyle = '#ff2e63';
+        ctx.beginPath();
+        ctx.roundRect(-62, -45, 14, 30, 6);
+        ctx.roundRect(48, -45, 14, 30, 6);
+        ctx.fill();
+        ctx.strokeStyle = '#ff2e63';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(0, -65, 54, Math.PI * 0.8, Math.PI * 0.2, true);
+        ctx.stroke();
+      }
+    }
+
+    // ─── 語音播放與 Web Audio 分析引擎 ─────────────────────────────
+    async function playTtsAudio(text) {
+      if (!text) return;
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+
+      const voice = document.getElementById('voiceSelect').value;
+      const rate = document.getElementById('rateSelect').value;
+
+      try {
+        isSpeaking = true;
+        // 呼叫後端 Edge-TTS
+        const resp = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, voice, rate })
+        });
+
+        if (!resp.ok) {
+          throw new Error('TTS server error');
+        }
+
+        const arrayBuffer = await resp.arrayBuffer();
+        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+        if (audioSource) {
+          try { audioSource.stop(); } catch(e){}
+        }
+
+        audioSource = audioCtx.createBufferSource();
+        audioSource.buffer = audioBuffer;
+
+        if (!analyserNode) {
+          analyserNode = audioCtx.createAnalyser();
+          analyserNode.fftSize = 256;
+          analyserNode.smoothingTimeConstant = 0.6;
+        }
+
+        audioSource.connect(analyserNode);
+        analyserNode.connect(audioCtx.destination);
+
+        audioSource.onended = () => {
+          isSpeaking = false;
+          isRapping = false;
+        };
+
+        audioSource.start();
+
+      } catch (err) {
+        console.warn('Backend TTS failed, falling back to Web Speech API:', err);
+        // 前端兜底語音合成
+        if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'zh-TW';
+          utterance.onstart = () => { isSpeaking = true; };
+          utterance.onend = () => { isSpeaking = false; isRapping = false; };
+          window.speechSynthesis.speak(utterance);
+        } else {
+          isSpeaking = false;
+          alert('語音播放失敗，請檢查網路連線或後端服務。');
+        }
+      }
+    }
+
+    // ─── 帶貨業務邏輯 ──────────────────────────────────────────────
+    async function generateSalesScript() {
+      const name = document.getElementById('prodName').value;
+      const highlights = document.getElementById('prodHighlights').value;
+      const price = document.getElementById('prodPrice').value;
+      const orig_price = document.getElementById('prodOrigPrice').value;
+      const style = document.getElementById('salesStyle').value;
+
+      try {
+        const res = await fetch('/api/generate_script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'sales', name, highlights, price, orig_price, style })
+        });
+        const data = await res.json();
+        if (data.code === 0) {
+          document.getElementById('scriptText').value = data.script;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function startLivePitch() {
+      // 1. 更新直播畫面上商品資訊卡
+      document.getElementById('cardTitle').innerText = document.getElementById('prodName').value;
+      document.getElementById('cardPrice').innerText = document.getElementById('prodPrice').value;
+      document.getElementById('cardOrigPrice').innerText = document.getElementById('prodOrigPrice').value;
+      document.getElementById('cardTag').innerText = document.getElementById('prodTagInput').value || '熱賣秒殺';
+      
+      const imgVal = document.getElementById('prodImgUrl').value;
+      if (imgVal) {
+        document.getElementById('cardImg').src = imgVal;
+      }
+
+      // 2. 觸發 3-2-1 上架大字特效
+      showActionBanner("🔥 王牌爆款上架！", "3 · 2 · 1 限時秒殺開搶");
+
+      // 3. 播報帶貨文案
+      const script = document.getElementById('scriptText').value;
+      playTtsAudio(script);
+
+      // 4. 發射點贊小愛心
+      for (let i = 0; i < 6; i++) {
+        setTimeout(spawnHeart, i * 250);
+      }
+    }
+
+    function applyProductPreset(key) {
+      const p = productPresets[key];
+      if (!p) return;
+      document.getElementById('prodName').value = p.name;
+      document.getElementById('prodPrice').value = p.price;
+      document.getElementById('prodOrigPrice').value = p.orig_price;
+      document.getElementById('prodHighlights').value = p.highlights;
+      document.getElementById('prodImgUrl').value = p.img;
+      document.getElementById('prodLink').value = p.link;
+      document.getElementById('prodTagInput').value = p.tag;
+      updatePreviewImg(p.img);
+      generateSalesScript();
+    }
+
+    function updatePreviewImg(url) {
+      if (url) {
+        document.getElementById('imgPreview').src = url;
+        document.getElementById('cardImg').src = url;
+      }
+    }
+
+    function handleBuyClick() {
+      const link = document.getElementById('prodLink').value || '#';
+      spawnHeart();
+      showActionBanner("🎉 感謝家人下單！", "已成功前往購買連結");
+      window.open(link, '_blank');
+    }
+
+    // ─── 說唱與表演模組 ──────────────────────────────────────────
+    async function generateRapLyrics() {
+      const name = document.getElementById('prodName').value;
+      const highlights = document.getElementById('prodHighlights').value;
+      const price = document.getElementById('prodPrice').value;
+      const orig_price = document.getElementById('prodOrigPrice').value;
+
+      try {
+        const res = await fetch('/api/generate_script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'rap', name, highlights, price, orig_price })
+        });
+        const data = await res.json();
+        if (data.code === 0) {
+          document.getElementById('rapText').value = data.script;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function startRapShow() {
+      isRapping = true;
+      activeStageLight = 'neon';
+      showActionBanner("🎤 說唱大秀 START！", "Drop the beat! 跟著節奏動起來");
+      playSfx('airhorn');
+
+      const lyrics = document.getElementById('rapText').value;
+      playTtsAudio(lyrics);
+    }
+
+    // ─── 彈幕與問答互動 ──────────────────────────────────────────
+    const DANMAKU_PRESETS = [
+      "已經下單了，期待收貨！", "主播今天太好看了吧", "這個音質真的沒話說", "包郵嗎家人們？",
+      "前排圍觀！點贊點贊", "321已拍下！", "求主播唱個歌！", "價格真的太香了！",
+      "給力給力！", "買了兩組送朋友！"
+    ];
+
+    function addDanmaku(text, isSpecial = false) {
+      const box = document.getElementById('danmakuBox');
+      const item = document.createElement('div');
+      item.className = 'danmaku-item' + (isSpecial ? ' special' : '');
+      item.innerHTML = (isSpecial ? '⭐ ' : '💬 ') + text;
+      
+      const topPos = Math.random() * (box.clientHeight - 40);
+      item.style.top = `${topPos}px`;
+      item.style.animationDuration = `${6 + Math.random() * 4}s`;
+
+      box.appendChild(item);
+      setTimeout(() => { item.remove(); }, 10000);
+    }
+
+    function toggleAutoDanmaku(enable) {
+      if (enable) {
+        if (!autoDanmakuInterval) {
+          autoDanmakuInterval = setInterval(() => {
+            const txt = DANMAKU_PRESETS[Math.floor(Math.random() * DANMAKU_PRESETS.length)];
+            addDanmaku(txt);
+          }, 2400);
+        }
+      } else {
+        clearInterval(autoDanmakuInterval);
+        autoDanmakuInterval = null;
+      }
+    }
+
+    function simulateViewerQuestion(q) {
+      document.getElementById('viewerInput').value = q;
+      sendCustomComment();
+    }
+
+    async function sendCustomComment() {
+      const q = document.getElementById('viewerInput').value.trim();
+      if (!q) return;
+      addDanmaku(`觀眾: ${q}`, true);
+
+      // 自動產生回答
+      const name = document.getElementById('prodName').value;
+      const highlights = document.getElementById('prodHighlights').value;
+      const price = document.getElementById('prodPrice').value;
+
+      try {
+        const res = await fetch('/api/generate_script', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'qa', name, highlights, price, question: q })
+        });
+        const data = await res.json();
+        if (data.code === 0) {
+          document.getElementById('qaReplyText').value = data.script;
+        }
+      } catch (e) {}
+    }
+
+    function speakQaReply() {
+      const text = document.getElementById('qaReplyText').value;
+      showActionBanner("💬 主播解答中", "感謝粉絲彈幕提問！");
+      playTtsAudio(text);
+    }
+
+    // ─── 形象與音色切換 ──────────────────────────────────────────
+    function selectAvatarPreset(key) {
+      const preset = avatarPresets[key];
+      if (!preset) return;
+      avatarData.current = key;
+      avatarData.customImg = null;
+      avatarData.name = preset.name;
+      avatarData.title = preset.title;
+      document.getElementById('voiceSelect').value = preset.defaultVoice;
+      document.getElementById('streamerName').innerText = avatarData.name;
+      document.getElementById('avatarBadge').innerText = avatarData.title;
+      showActionBanner("✨ 主播已切換", `已載入【${preset.name}】擬真模型`);
+    }
+
+    async function handleFileUpload(evt, type) {
+      const file = evt.target.files[0];
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('/api/upload_image', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.code === 0) {
+          if (type === 'product') {
+            document.getElementById('prodImgUrl').value = data.url;
+            updatePreviewImg(data.url);
+          } else if (type === 'avatar') {
+            const img = new Image();
+            img.src = data.url;
+            img.onload = () => {
+              avatarData.customImg = img;
+              avatarData.name = '自訂主播';
+              avatarData.title = '自';
+              document.getElementById('streamerName').innerText = avatarData.name;
+              document.getElementById('avatarBadge').innerText = avatarData.title;
+            };
+          }
+        }
+      } catch (e) {
+        console.error('Upload failed', e);
+      }
+    }
+
+    function updateVoice(v) {
+      console.log('Selected voice:', v);
+    }
+
+    function testAudioVoice() {
+      playTtsAudio("哈囉大家好！我是您的 AI 直播帶貨官，今天很高興在直播間與大家見面！");
+    }
+
+    function updateStageLighting(light) {
+      activeStageLight = light;
+    }
+
+    // ─── 特效與音效 ──────────────────────────────────────────────
+    function showActionBanner(title, sub) {
+      const banner = document.getElementById('actionBanner');
+      document.getElementById('bannerTitle').innerText = title;
+      document.getElementById('bannerSub').innerText = sub;
+      banner.classList.add('show');
+      setTimeout(() => {
+        banner.classList.remove('show');
+      }, 2500);
+    }
+
+    function triggerEffect(type) {
+      if (type === 'applause') {
+        showActionBanner("👏 全場熱烈歡呼！", "家人們太熱情了！感謝點贊");
+        playSfx('applause');
+      } else if (type === 'heart') {
+        showActionBanner("💖 感謝比心支持！", "祝下單的家人們心想事成！");
+        for (let i = 0; i < 8; i++) setTimeout(spawnHeart, i * 150);
+      } else if (type === 'countdown') {
+        showActionBanner("⏱️ 3 · 2 · 1 上連結！", "🔥 庫存最後告急，手慢無！");
+        playSfx('drum');
+      } else if (type === 'dance') {
+        showActionBanner("🔥 嗨起來跳起來！", "節奏狂歡進行中");
+        isRapping = true;
+        setTimeout(() => { isRapping = false; }, 6000);
+      }
+    }
+
+    function spawnHeart() {
+      const box = document.querySelector('.stage-screen');
+      const heart = document.createElement('div');
+      heart.className = 'floating-heart';
+      const emojis = ['💖', '❤️', '🔥', '✨', '🎉'];
+      heart.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+      heart.style.right = `${15 + Math.random() * 40}px`;
+      box.appendChild(heart);
+      setTimeout(() => heart.remove(), 2000);
+
+      // 更新點贊數
+      const likeElem = document.getElementById('likeCount');
+      let currentVal = parseFloat(likeElem.innerText);
+      likeElem.innerText = (currentVal + 0.1).toFixed(1) + 'w';
+    }
+
+    // 簡易合成音效 (免外部檔案相依)
+    function playSfx(type) {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioCtx.currentTime;
+
+      if (type === 'cash') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(987.77, now);
+        osc.frequency.setValueAtTime(1318.51, now + 0.1);
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      } else if (type === 'applause') {
+        // 模擬掌聲白噪音
+        const bufferSize = audioCtx.sampleRate * 1.2;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (audioCtx.sampleRate * 0.4));
+        }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.2, now);
+        noise.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start(now);
+      } else if (type === 'drum') {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.exponentialRampToValueAtTime(35, now + 0.3);
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'airhorn') {
+        [466.16, 554.37, 622.25].forEach((freq, idx) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+          gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.4);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + idx * 0.08);
+          osc.stop(now + idx * 0.08 + 0.4);
+        });
+      }
+    }
+
+    function switchTab(idx) {
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === idx);
+      });
+      document.querySelectorAll('.tab-content').forEach((content, i) => {
+        content.classList.toggle('active', i === idx);
+      });
+    }
+
+    function copyScript() {
+      const txt = document.getElementById('scriptText').value;
+      navigator.clipboard.writeText(txt);
+      alert('文案已複製到剪貼簿！');
+    }
+
+    // 啟動全流程
+    window.addEventListener('DOMContentLoaded', () => {
+      initCanvasAnimation();
+      toggleAutoDanmaku(true);
+      selectAvatarPreset('elena');
+    });
+  </script>
+</body>
+</html>

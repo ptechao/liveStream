@@ -19,3 +19,8 @@ workspace/log_ngp.txt
 models/
 *.log
 dist
+.venv/
+uploads/*
+!uploads/.gitkeep
+.env
+
